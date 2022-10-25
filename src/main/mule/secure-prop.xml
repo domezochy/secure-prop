@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e5a73d6f-9e94-4107-b557-4639d36efbbd" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="b67a9e5a-bb3e-4ace-aa0c-533758a44137" >
+		<http:request-connection host="training4-american-api.cloudhub.io" port="80" />
+	</http:request-config>
+	<global-property doc:name="Global Property" doc:id="3dccfa70-0fc4-4a4b-a0cd-c187574b1709" name="env" value="dev" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bf48c7a6-7c3d-44a5-bfc8-80e7b1d17e69" file="properties/${env}-config.yaml" key="${encryptKey.key}">
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<flow name="secure-keyFlow" doc:id="f68c8337-7276-4c9a-ab58-5fed0c02d221" >
+		<http:listener doc:name="Listener" doc:id="20c0d8eb-2d1e-4035-972d-85144e39c50d" config-ref="HTTP_Listener_config" path="/secure" allowedMethods="GET">
+			<http:error-response >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="Transform Message" doc:id="7875988a-7464-43e3-82ee-e7e1a03a79e7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"client_id" :  attributes.queryParams.client_id,
+	"client_secret" : Mule::p('secure::encryptKey.secureKey'),
+	"message" : "this is it.."
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="493343d9-79ad-4304-ace2-e4d42ff3d679" config-ref="HTTP_Request_configuration" path="/flights">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : payload.client_secret,
+	"client_id" : payload.client_id
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="562940f1-5949-4f8a-ad40-23b7daf53388" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1109b87c-8c6c-49b1-8bc6-81bf3e5d5783" />
+	</flow>
+</mule>
