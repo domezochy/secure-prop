@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<error-handler name="commomErrosError_Handler" doc:id="be813039-e30b-4b82-8dfa-947ca9c7d1d2" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Error Propagate" doc:id="f0b8a9f2-b2f4-478c-8542-7ff491383509" type="HTTP:CONNECTIVITY, HTTP:UNAUTHORIZED" >
+			<ee:transform doc:name="Transform Message" doc:id="79b2291a-8ccd-48d5-9787-70b7443572b6" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message propagate " : error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="Error Continue" doc:id="19df55fa-ea41-4e29-b635-938ac29097f2" type="ANY" >
+			<ee:transform doc:name="Transform Message" doc:id="222f4c24-43a1-4613-a6ca-335589854730" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorDescription" : error.description,
+	"errorMessage" : error.errorMessage,
+	"error Type" : error.errorType
+	
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+	</error-handler>
+</mule>
