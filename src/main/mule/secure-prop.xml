@@ -16,6 +16,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bf48c7a6-7c3d-44a5-bfc8-80e7b1d17e69" file="properties/${env}-config.yaml" key="${encryptKey.key}">
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
+	<configuration doc:name="Configuration" doc:id="400f235b-5110-48a7-a0b6-2c03c22326e7" defaultErrorHandler-ref="commomErrosError_Handler" />
 	<flow name="secure-keyFlow" doc:id="f68c8337-7276-4c9a-ab58-5fed0c02d221" >
 		<http:listener doc:name="Listener" doc:id="20c0d8eb-2d1e-4035-972d-85144e39c50d" config-ref="HTTP_Listener_config" path="/secure" allowedMethods="GET">
 			<http:error-response >
@@ -29,12 +30,12 @@ output application/json
 ---
 {
 	"client_id" :  attributes.queryParams.client_id,
-	"client_secret" : Mule::p('secure::encryptKey.secureKey'),
-	"message" : "this is it.."
+	"client_secret" : Mule::p('secure::encryptKey.key')
 }
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f7a83430-863e-40fe-b15a-89cf937732a2" message="#[payload]"/>
 		<http:request method="GET" doc:name="Request" doc:id="493343d9-79ad-4304-ace2-e4d42ff3d679" config-ref="HTTP_Request_configuration" path="/flights">
 			<http:headers ><![CDATA[#[output application/java
 ---
